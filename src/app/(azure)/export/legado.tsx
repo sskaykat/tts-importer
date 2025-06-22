@@ -1,7 +1,7 @@
 "use client";
-import type { VoiceConfig, ApiConfig } from "@/lib/types";
+import type { VoiceConfig, ApiConfig } from "@/lib/azure/types";
 import { useCopyToClipboard } from "@/hooks/use-clipboard";
-import genLegadoConfig from "@/lib/legado";
+import genLegadoConfig from "@/lib/azure/legado";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { QrCodeIcon } from "lucide-react";
@@ -13,11 +13,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { config2url } from "@/lib/config-to-url";
+import { config2url } from "@/lib/azure/config-to-url";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from "qrcode.react";
 import { ActionLine } from "@/components/ui/action-line";
 import LinkExportButton from "./link-export-button";
+import { usePostHog } from "posthog-js/react";
 
 export function LegadoExport({
   api,
@@ -27,6 +28,7 @@ export function LegadoExport({
   voiceConfig: VoiceConfig;
 }) {
   const copy = useCopyToClipboard();
+  const posthog = usePostHog();
 
   const legadoConfig = useMemo(() => {
     return genLegadoConfig(api, voiceConfig);
@@ -51,7 +53,16 @@ export function LegadoExport({
       <ActionLine action="一键导入">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                posthog.capture("one-click export QR code open", {
+                  type: "azure",
+                  app: "legado",
+                });
+              }}
+            >
               <QrCodeIcon />
             </Button>
           </DialogTrigger>
@@ -64,17 +75,24 @@ export function LegadoExport({
               <QRCodeSVG value={directUrl} size={256} />
             </div>
             <div className="flex gap-4 justify-end">
-              <LinkExportButton link={configUrl} copy={copy}>
-                配置链接
-              </LinkExportButton>
-              <LinkExportButton link={directUrl} copy={copy}>
-                一键导入
-              </LinkExportButton>
+              <LinkExportButton link={configUrl}>配置链接</LinkExportButton>
+              <LinkExportButton link={directUrl}>一键导入</LinkExportButton>
             </div>
           </DialogContent>
         </Dialog>
         <Button asChild>
-          <a href={directUrl} target="_blank" rel="noreferrer">
+          <a
+            href={directUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => {
+              posthog.capture("profile exported", {
+                type: "azure",
+                app: "legado",
+                method: "one-click-export-button-click",
+              });
+            }}
+          >
             导入
           </a>
         </Button>
@@ -84,13 +102,18 @@ export function LegadoExport({
         <Button
           onClick={() => {
             copy(legadoConfig);
+            posthog.capture("profile exported", {
+              type: "azure",
+              app: "legado",
+              method: "copy-profile",
+            });
           }}
         >
           复制
         </Button>
       </ActionLine>
       <p className="text-sm text-gray-500">
-        同样适用于源阅读、服务器端阅读或其他支持阅读格式语音源的软件。
+        同样适用于服务器端阅读等其他支持阅读格式语音源的软件。
       </p>
     </div>
   );

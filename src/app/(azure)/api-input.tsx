@@ -18,21 +18,17 @@ import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
 
 export type ApiConfig = {
   region: string;
   key: string;
 };
 
-const apiAtom = atomWithStorage<ApiConfig>(
-  "tts-i:settings",
-  {
-    region: "eastasia",
-    key: "",
-  },
-  undefined,
-  { getOnInit: true }
-);
+const apiAtom = atomWithStorage<ApiConfig>("tts-i:settings", {
+  region: "eastasia",
+  key: "",
+});
 
 export const apiConfig = atom((get) => get(apiAtom));
 
@@ -42,12 +38,7 @@ export type Voice = {
   styles?: string[];
 };
 
-const writableVoiceListAtom = atomWithStorage<Voice[]>(
-  "tts-i:voice-list",
-  [],
-  undefined,
-  { getOnInit: true }
-);
+const writableVoiceListAtom = atomWithStorage<Voice[]>("tts-i:voice-list", []);
 
 export const voiceListAtom = atom((get) => get(writableVoiceListAtom));
 export const voiceListCountAtom = atom((get) => get(voiceListAtom).length);
@@ -58,6 +49,8 @@ export function ApiInput() {
   const hasMounted = useHasMounted();
 
   const voiceListCount = useAtomValue(voiceListCountAtom);
+
+  const posthog = usePostHog();
 
   const onGetVoices = async () => {
     // TODO error handling
@@ -87,18 +80,17 @@ export function ApiInput() {
       toast.error("获取声音列表失败");
       return;
     }
-    const zhVoices = res
-      .filter((voice) => voice.Locale.startsWith("zh"))
-      .map((voice) => {
-        const styles: string[] | undefined = voice.StyleList || undefined;
-        return {
-          localName: voice.LocalName,
-          shortName: voice.ShortName,
-          styles: styles,
-        } satisfies Voice as Voice;
-      });
-    setVoices(zhVoices);
-    toast.success(`获取到${zhVoices.length}个中文语音`);
+    const voices = res.map((voice) => {
+      const styles: string[] | undefined = voice.StyleList || undefined;
+      return {
+        localName: voice.LocalName,
+        shortName: voice.ShortName,
+        styles: styles,
+      } satisfies Voice as Voice;
+    });
+    setVoices(voices);
+    toast.success(`获取到${voices.length}个中文语音`);
+    posthog.capture("azure voices fetched");
   };
 
   return (

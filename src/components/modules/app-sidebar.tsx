@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { allDocs } from "contentlayer/generated";
+import { allHelps } from "content-collections";
 import { GithubIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,7 +42,7 @@ export function AppSidebar() {
                 <Link
                   href="https://github.com/yy4382/tts-importer"
                   className={cn(
-                    buttonVariants({ variant: "none", size: "icon" }),
+                    buttonVariants({ variant: "ghost" }),
                     "hover:text-purple-400"
                   )}
                 >
@@ -75,12 +75,12 @@ export function AppSidebar() {
           <SidebarGroupLabel>帮助</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {allDocs
+              {allHelps
                 .sort((a, b) => (a.order < b.order ? -1 : 1))
                 .map((doc, idx) => (
                   <SidebarMenuItem key={idx}>
-                    <SidebarItemActive asChild pathname={doc.url}>
-                      <Link href={doc.url}>{doc.title}</Link>
+                    <SidebarItemActive asChild pathname={`/help/${doc.slug}`}>
+                      <Link href={`/help/${doc.slug}`}>{doc.title}</Link>
                     </SidebarItemActive>
                   </SidebarMenuItem>
                 ))}

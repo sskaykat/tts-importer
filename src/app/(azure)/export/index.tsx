@@ -12,6 +12,7 @@ import {
   voiceConfigAtom,
   type VoiceConfigWithState,
 } from "../voice-configure";
+import { SourceReaderExport } from "./source-reader";
 
 export function Export() {
   const voiceConfigWithState = useAtomValue(voiceConfigAtom);
@@ -22,10 +23,11 @@ export function Export() {
         <CardTitle>导入</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="ifreetime" className="space-y-4">
+        <Tabs defaultValue="ifreetime">
           <TabsList>
-            <TabsTrigger value="ifreetime">爱阅</TabsTrigger>
             <TabsTrigger value="legado">阅读</TabsTrigger>
+            <TabsTrigger value="ifreetime">爱阅记</TabsTrigger>
+            <TabsTrigger value="source-reader">源阅读</TabsTrigger>
           </TabsList>
           <TabsContent value="ifreetime">
             <TabContentExport
@@ -40,6 +42,14 @@ export function Export() {
               voice={voiceConfigWithState}
               render={(voiceConfig) => (
                 <LegadoExport voiceConfig={voiceConfig} api={api} />
+              )}
+            />
+          </TabsContent>
+          <TabsContent value="source-reader">
+            <TabContentExport
+              voice={voiceConfigWithState}
+              render={(voiceConfig) => (
+                <SourceReaderExport voiceConfig={voiceConfig} api={api} />
               )}
             />
           </TabsContent>
